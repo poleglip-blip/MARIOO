@@ -184,7 +184,6 @@
             { q: "Where to get medicine?（哪裡拿藥？）", a: "Pharmacy/Hospital（藥局／醫院）", o: ["Pharmacy/Hospital（藥局／醫院）", "Park（公園）", "Toy shop（玩具店）", ] }
         ];
 
-        // Load from storage or use defaults
         let questionBank =  defaultQuestions
         function saveToStorage() {
             localStorage.setItem('marioMazeData', JSON.stringify(questionBank));
