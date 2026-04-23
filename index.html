@@ -185,7 +185,7 @@
         ];
 
         // Load from storage or use defaults
-        let questionBank = JSON.parse(localStorage.getItem('marioMazeData')) || defaultQuestions;
+        let questionBank = JSON.parse(localStorage.removeItem('marioMazeData')) || defaultQuestions;
 
         function saveToStorage() {
             localStorage.setItem('marioMazeData', JSON.stringify(questionBank));
