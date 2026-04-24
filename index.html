@@ -1,344 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mario Maze Race - MEGA ARCADE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --mario: #ff0000; --luigi: #44bd32; --peach: #ff9ff3; --wario: #f1c40f; --waluigi: #8c7ae6; 
-        }
-        * { font-family: 'Press Start 2P', cursive; box-sizing: border-box; }
-        
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #5c94fc; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mega Maze Race - Arcade Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+--mario: #ff4d4d;
+--luigi: #2ecc71;
+--peach: #f8a5c2;
+--wario: #f1c40f;
+--waluigi: #a29bfe;
+}
+* { font-family: 'Press Start 2P', cursive; box-sizing: border-box; }
 
-        #bg-layer {
-            position: fixed; inset: 0;
-            background-image: url('title_bg.png'); 
-            background-size: cover; background-position: center;
-            z-index: 1; transition: 0.8s ease-in-out;
-        }
+body {
+background-color: #5c94fc;
+margin: 0;
+overflow: hidden;
+color: white;
+}
 
-        .screen { 
-            position: absolute; inset: 0; z-index: 1000; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            background: rgba(0,0,0,0.7); 
-        }
+/* Pixel art style buttons */
+.arcade-btn {
+box-shadow: -4px 4px 0px 0px rgba(0,0,0,1);
+transition: all 0.1s;
+}
+.arcade-btn:active {
+transform: translate(-2px, 2px);
+box-shadow: -2px 2px 0px 0px rgba(0,0,0,1);
+}
 
-        #mute-container {
-            position: fixed; top: 20px; right: 20px; z-index: 2500;
-            background: #fff; border: 5px solid #000;
-            border-radius: 10px; width: 70px; height: 70px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 2rem;
-        }
+.track-bg {
+background: linear-gradient(to bottom, #5c94fc 0%, #5c94fc 70%, #2ecc71 70%, #2ecc71 75%, #8B4513 75%);
+}
 
-        .selection-wrapper {
-            display: flex; gap: 40px; background: #fff;
-            padding: 30px; border: 8px solid #000;
-        }
-        .p-select-box { display: flex; flex-direction: column; align-items: center; width: 400px; }
-        .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .char-card { background: #eee; padding: 15px; border: 5px solid #999; cursor: pointer; text-align: center; }
-        .char-card img { height: 120px; image-rendering: pixelated; }
+.character-svg { width: 80px; height: 80px; image-rendering: pixelated; }
 
-        #game-container { position: absolute; inset: 0; z-index: 150; display: none; flex-direction: column; padding: 10px; }
-        .race-track { height: 220px; width: 100%; border-bottom: 40px solid #8B4513; position: relative; margin: 5px 0; overflow: visible; }
-        .race-track::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 15px; background: #2ecc71; z-index: 3; }
-        
-        .bush { position: absolute; bottom: 0; height: 60px; width: 90px; background: url('bush.png') no-repeat center/contain; z-index: 10; }
-        .runner { position: absolute; bottom: 0; left: 0%; height: 160px; transition: left 0.8s; z-index: 5; image-rendering: pixelated; }
-        
-        .coin-fx {
-            position: absolute; width: 60px; height: 60px; 
-            background: url('coin.gif') no-repeat center/contain;
-            z-index: 20; animation: coinFloat 0.6s ease-out forwards;
-        }
-        @keyframes coinFloat {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-120px); opacity: 0; }
-        }
+@keyframes coin-bounce {
+0% { transform: translateY(0) scale(1); opacity: 1; }
+100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+}
+.coin-fx {
+position: absolute;
+animation: coin-bounce 0.6s ease-out forwards;
+pointer-events: none;
+}
 
-        .jump { animation: jumpAnim 0.5s ease; }
-        @keyframes jumpAnim { 0%, 100% { bottom: 0; } 50% { bottom: 100px; } }
+.jump { animation: jump-anim 0.4s ease-out; }
+@keyframes jump-anim {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-60px); }
+}
 
-        .quiz-area { display: flex; gap: 30px; width: 100%; flex-grow: 1; padding: 20px; }
-        .p-box { 
-            flex: 1; background: #ffffff; border: 10px solid #000; 
-            padding: 30px; text-align: center; color: #000; display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .p-box h2 { font-size: 1.5rem; margin: 0; }
-        .p-box p { font-size: 1.2rem; line-height: 1.6; margin: 20px 0; min-height: 80px; }
+#bg-clouds {
+position: fixed;
+top: 0; left: 0; width: 100%; height: 50%;
+z-index: 0; opacity: 0.5;
+pointer-events: none;
+}
 
-        .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .opt-btn { 
-            padding: 25px 10px; font-size: 0.9rem; cursor: pointer; 
-            background: #f1c40f; border: 6px solid #000; font-weight: bold;
-        }
+.option-btn {
+background: #f1c40f;
+border: 4px solid #000;
+color: #000;
+padding: 15px 10px;
+font-size: 0.7rem;
+text-align: center;
+cursor: pointer;
+}
+.option-btn:hover { background: #f39c12; }
 
-        #editor-screen { display: none; background: #222; }
-        .editor-container { background: #fff; width: 90%; height: 80%; overflow-y: auto; padding: 40px; border: 10px solid #ff0000; }
-        .edit-item { border-bottom: 4px solid #eee; padding: 20px 0; display: flex; flex-direction: column; color: #000; position: relative; }
-        .edit-item input { margin: 10px 0; padding: 15px; font-size: 1rem; border: 3px solid #000; width: 100%; }
-        .delete-btn { position: absolute; right: 0; top: 10px; background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 0.5rem; }
-
-        #victory-screen { display: none; z-index: 2000; background: #000; color: #fff; }
-        .win-box img { height: 400px; margin: 30px; image-rendering: pixelated; }
-
-        .main-btn { padding: 25px 40px; font-size: 1.5rem; background: #ff0000; color: #fff; cursor: pointer; border: 6px solid #fff; margin-top: 20px; }
-    </style>
+/* Custom Scrollbar for Editor */
+.custom-scroll::-webkit-scrollbar { width: 10px; }
+.custom-scroll::-webkit-scrollbar-track { background: #333; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #ff0000; }
+</style>
 </head>
-<body onclick="playBGM()">
+<body>
 
-    <div id="bg-layer"></div>
+<!-- Background Decoration -->
+<svg id="bg-clouds" viewBox="0 0 1000 500">
+<path d="M100,100 Q120,80 140,100 Q160,80 180,100 Q200,80 220,100 L220,130 L100,130 Z" fill="white" opacity="0.8"/>
+<path d="M500,150 Q520,130 540,150 Q560,130 580,150 Q600,130 620,150 L620,180 L500,180 Z" fill="white" opacity="0.8"/>
+<path d="M800,80 Q820,60 840,80 Q860,60 880,80 Q900,60 920,80 L920,110 L800,110 Z" fill="white" opacity="0.8"/>
+</svg>
 
-    <div id="mute-container" onclick="toggleMute(event)">
-        <span id="mute-icon">🔊</span>
-    </div>
+<!-- Mute Toggle -->
+<button onclick="toggleMute()" class="fixed top-5 right-5 z-[3000] bg-white border-4 border-black p-2 rounded-lg text-black arcade-btn">
+<span id="mute-icon">🔊</span>
+</button>
 
-    <div id="title-screen" class="screen">
-        <h1 style="font-size: 5rem; color: #fff; text-shadow: 10px 10px #ff0000; text-align:center;">MEGA<br>MAZE RACE</h1>
-        <button class="main-btn" onclick="openSelection()">PRESS START</button>
-        <button class="main-btn" style="background:#555; font-size: 1rem;" onclick="openEditor()">QUESTION EDITOR</button>
-    </div>
+<!-- Title Screen -->
+<div id="title-screen" class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/70">
+<h1 class="text-6xl md:text-8xl font-bold text-center mb-10 drop-shadow-[0_10px_0_rgba(255,0,0,1)]">
+MEGA<br><span class="text-yellow-400">MAZE RACE</span>
+</h1>
+<div class="flex flex-col gap-4">
+<button onclick="openSelection()" class="arcade-btn bg-red-600 text-white px-10 py-5 text-2xl border-4 border-white">PRESS START</button>
+<button onclick="openEditor()" class="arcade-btn bg-gray-700 text-white px-6 py-3 text-sm border-4 border-white">QUESTION EDITOR</button>
+</div>
+</div>
 
-    <div id="select-screen" class="screen" style="display:none;">
-        <h2 style="color:white; font-size: 2.5rem; margin-bottom: 30px;">SELECT CHARACTER</h2>
-        <div class="selection-wrapper">
-            <div class="p-select-box">
-                <h3 style="color:var(--mario); font-size: 1.2rem; margin-bottom: 20px;">PLAYER 1</h3>
-                <div id="grid1" class="char-grid"></div>
-            </div>
-            <div class="p-select-box">
-                <h3 style="color:var(--luigi); font-size: 1.2rem; margin-bottom: 20px;">PLAYER 2</h3>
-                <div id="grid2" class="char-grid"></div>
-            </div>
-        </div>
-        <button id="race-btn" class="main-btn" style="display:none;" onclick="startRace()">IT'S GO TIME!</button>
-    </div>
+<!-- Character Selection -->
+<div id="select-screen" class="fixed inset-0 z-[1100] hidden flex flex-col items-center justify-center bg-black/80 p-4">
+<h2 class="text-3xl mb-8">SELECT YOUR RACER</h2>
+<div class="flex flex-wrap justify-center gap-10 bg-white p-8 border-8 border-black text-black">
+<div class="flex flex-col items-center">
+<h3 class="mb-4 text-red-600">PLAYER 1</h3>
+<div id="grid1" class="grid grid-cols-2 gap-4"></div>
+</div>
+<div class="flex flex-col items-center">
+<h3 class="mb-4 text-green-600">PLAYER 2</h3>
+<div id="grid2" class="grid grid-cols-2 gap-4"></div>
+</div>
+</div>
+<button id="race-btn" onclick="startRace()" class="hidden arcade-btn mt-8 bg-red-600 px-10 py-5 text-2xl border-4 border-white">IT'S GO TIME!</button>
+</div>
 
-    <div id="editor-screen" class="screen">
-        <h2 style="color:white; font-size: 2rem;">EDIT QUESTIONS</h2>
-        <div class="editor-container" id="editor-list"></div>
-        <button class="main-btn" onclick="addQuestion()" style="background:#2ecc71;">+ ADD NEW</button>
-        <button class="main-btn" onclick="closeEditor()">SAVE & CLOSE</button>
-    </div>
+<!-- Editor Screen -->
+<div id="editor-screen" class="fixed inset-0 z-[1200] hidden flex flex-col items-center justify-center bg-zinc-900 p-6">
+<h2 class="text-2xl mb-4">MAP EDITOR (QUESTIONS)</h2>
+<div id="editor-list" class="w-full max-w-2xl h-[60vh] overflow-y-auto bg-white border-8 border-red-600 p-4 custom-scroll space-y-6"></div>
+<div class="flex gap-4 mt-6">
+<button onclick="addQuestion()" class="arcade-btn bg-green-600 px-6 py-3 text-sm border-2 border-white">+ ADD NEW</button>
+<button onclick="closeEditor()" class="arcade-btn bg-blue-600 px-6 py-3 text-sm border-2 border-white">SAVE & BACK</button>
+</div>
+</div>
 
-    <div id="game-container">
-        <div class="race-track" id="track-p1">
-            <div class="bush" style="left: 10%;"></div><div class="bush" style="left: 30%;"></div>
-            <div class="bush" style="left: 50%;"></div><div class="bush" style="left: 70%;"></div>
-            <div class="bush" style="left: 90%;"></div>
-            <img src="" id="p1-sprite" class="runner">
-        </div>
-        <div class="race-track" id="track-p2">
-            <div class="bush" style="left: 10%;"></div><div class="bush" style="left: 30%;"></div>
-            <div class="bush" style="left: 50%;"></div><div class="bush" style="left: 70%;"></div>
-            <div class="bush" style="left: 90%;"></div>
-            <img src="" id="p2-sprite" class="runner">
-        </div>
-        <div class="quiz-area">
-            <div class="p-box" id="p1-ui">
-                <h2 id="p1-label">P1</h2>
-                <p id="p1-q"></p>
-                <div id="p1-opts" class="opt-grid"></div>
-            </div>
-            <div class="p-box" id="p2-ui">
-                <h2 id="p2-label">P2</h2>
-                <p id="p2-q"></p>
-                <div id="p2-opts" class="opt-grid"></div>
-            </div>
-        </div>
-    </div>
+<!-- Main Game Interface -->
+<div id="game-container" class="hidden fixed inset-0 z-[500] flex flex-col">
+<!-- Race Tracks -->
+<div class="flex-none h-[50vh] flex flex-col">
+<div id="track-p1" class="relative flex-1 track-bg border-b-4 border-black/20 overflow-hidden">
+<div id="p1-sprite" class="absolute bottom-[25%] left-0 z-10"></div>
+<!-- Finish Line -->
+<div class="absolute right-0 h-full w-20 border-l-8 border-dashed border-white/50 bg-black/10 flex items-center justify-center">
+<span class="rotate-90 text-[10px] opacity-30">FINISH</span>
+</div>
+</div>
+<div id="track-p2" class="relative flex-1 track-bg overflow-hidden">
+<div id="p2-sprite" class="absolute bottom-[25%] left-0 z-10"></div>
+<div class="absolute right-0 h-full w-20 border-l-8 border-dashed border-white/50 bg-black/10 flex items-center justify-center">
+<span class="rotate-90 text-[10px] opacity-30">FINISH</span>
+</div>
+</div>
+</div>
 
-    <div id="victory-screen" class="screen">
-        <div class="win-box" style="text-align:center;">
-            <h1 id="winner-text" style="font-size: 3rem;"></h1>
-            <img id="winner-gif" src="">
-            <br>
-            <button class="main-btn" onclick="location.reload()">MAIN MENU</button>
-        </div>
-    </div>
+<!-- Quiz Area -->
+<div class="flex-1 bg-black p-4 flex gap-4 overflow-hidden">
+<div id="p1-ui" class="flex-1 bg-white border-8 border-red-500 p-4 flex flex-col justify-between text-black rounded-sm">
+<div>
+<h3 id="p1-label" class="text-sm border-b-4 border-red-100 mb-2">P1</h3>
+<p id="p1-q" class="text-[0.65rem] leading-loose mb-4 h-16 overflow-y-auto"></p>
+</div>
+<div id="p1-opts" class="grid grid-cols-2 gap-2"></div>
+</div>
+<div id="p2-ui" class="flex-1 bg-white border-8 border-green-500 p-4 flex flex-col justify-between text-black rounded-sm">
+<div>
+<h3 id="p2-label" class="text-sm border-b-4 border-green-100 mb-2">P2</h3>
+<p id="p2-q" class="text-[0.65rem] leading-loose mb-4 h-16 overflow-y-auto"></p>
+</div>
+<div id="p2-opts" class="grid grid-cols-2 gap-2"></div>
+</div>
+</div>
+</div>
 
-    <audio id="bgm" src="mario_bgm.mp3" loop></audio>
-    <audio id="sfx-voice"></audio>
-    <audio id="sfx-coin" src="mario_coin.mp3"></audio>
+<!-- Victory Screen -->
+<div id="victory-screen" class="fixed inset-0 z-[2000] hidden flex flex-col items-center justify-center bg-black text-center p-10">
+<h1 id="winner-text" class="text-5xl md:text-7xl mb-10">WINNER!</h1>
+<div id="winner-display" class="scale-[2.5] mb-20"></div>
+<button onclick="location.reload()" class="arcade-btn bg-white text-black px-10 py-5 text-xl border-4 border-red-600">REPLAY</button>
+</div>
 
-    <script>
-        const characters = [
-            { name: "MARIO", file: "mario.gif", line: "mario_line.mp3", color: "var(--mario)" },
-            { name: "LUIGI", file: "luigi.gif", line: "luigi_line.mp3", color: "var(--luigi)" },
-            { name: "PEACH", file: "peach.gif", line: "peach_line.mp3", color: "var(--peach)" },
-            { name: "WARIO", file: "wario.gif", line: "wario_line.mp3", color: "var(--wario)" },
-            { name: "WALUIGI", file: "waluigi.gif", line: "waluigi_line.mp3", color: "var(--waluigi)" }
-        ];
+<script>
+// --- ASSET GENERATION (SVGs) ---
+const getCharacterSVG = (color, type = 'mario') => {
+const colors = {
+'MARIO': '#ff4d4d', 'LUIGI': '#2ecc71', 'PEACH': '#f8a5c2', 'WARIO': '#f1c40f', 'WALUIGI': '#a29bfe'
+};
+const mainColor = colors[type] || color;
+return `
+<svg class="character-svg" viewBox="0 0 100 100">
+<rect x="30" y="20" width="40" height="10" fill="${mainColor}" /> <!-- Cap -->
+<rect x="25" y="30" width="50" height="30" fill="#ffdbac" /> <!-- Face -->
+<rect x="35" y="40" width="10" height="10" fill="black" /> <!-- Eye L -->
+<rect x="55" y="40" width="10" height="10" fill="black" /> <!-- Eye R -->
+<rect x="30" y="60" width="40" height="30" fill="${mainColor}" /> <!-- Body -->
+<rect x="20" y="65" width="10" height="20" fill="${mainColor}" /> <!-- Arm L -->
+<rect x="70" y="65" width="10" height="20" fill="${mainColor}" /> <!-- Arm R -->
+</svg>
+`;
+};
 
-        let p1Char, p2Char, p1Pos = 0, p2Pos = 0, isMuted = false;
+const getCoinSVG = () => `
+<svg width="40" height="40" viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="45" fill="#f1c40f" stroke="#b7950b" stroke-width="5" />
+<rect x="45" y="20" width="10" height="60" fill="#b7950b" />
+</svg>
+`;
 
-        // --- CACHE / STORAGE LOGIC ---
-        const defaultQuestions =
-            { q: "How to keep your tummy healthy?（怎麼讓腸胃健康？）", a: "Drink water（喝水）", o: ["Drink water（喝水）", "No exercise（不運動）", "Eat old food（吃過期食物）",] },
-            { q: "Who helps with medicine?（誰幫助用藥？）", a: "Pharmacist（藥師）", o: ["Pharmacist（藥師）", "Chef（廚師）", "Teacher（老師）", ] },
-            { q: "What to do before eating?（吃東西前要做什麼？）", a: "Wash hands（洗手）", o: ["Wash hands（洗手）", "Sleep（睡覺）", "Play（玩）", ] },
-            { q: "Where to get medicine?（哪裡拿藥？）", a: "Pharmacy/Hospital（藥局／醫院）", o: ["Pharmacy/Hospital（藥局／醫院）", "Park（公園）", "Toy shop（玩具店）", ] }
-        ];
-
-        let questionBank =  defaultQuestions
-        function saveToStorage() {
-            localStorage.setItem('marioMazeData', JSON.stringify(questionBank));
-        }
-
-        function toggleMute(e) {
-            e.stopPropagation();
-            isMuted = !isMuted;
-            document.getElementById('bgm').muted = isMuted;
-            document.getElementById('mute-icon').innerText = isMuted ? "🔇" : "🔊";
-        }
-
-        function playBGM() { if (!isMuted) document.getElementById('bgm').play().catch(()=>{}); }
-
-        // --- EDITOR LOGIC ---
-        function openEditor() {
-            document.getElementById('title-screen').style.display='none'; 
-            document.getElementById('editor-screen').style.display='flex';
-            renderEditor();
-        }
-
-        function renderEditor() {
-            const list = document.getElementById('editor-list'); list.innerHTML = '';
-            questionBank.forEach((item, i) => {
-                const div = document.createElement('div'); div.className = 'edit-item';
-                div.innerHTML = `
-                    <button class="delete-btn" onclick="removeQuestion(${i})">DELETE</button>
-                    <strong>Question ${i+1}</strong>
-                    <input type="text" value="${item.q}" oninput="updateQ(${i}, 'q', this.value)" placeholder="Question">
-                    <input type="text" value="${item.a}" oninput="updateCorrect(${i}, this.value)" placeholder="Correct Answer" style="border-color:#2ecc71">
-                    <input type="text" value="${item.o[1]}" oninput="updateOption(${i}, 1, this.value)" placeholder="Wrong Choice 1">
-                    <input type="text" value="${item.o[2]}" oninput="updateOption(${i}, 2, this.value)" placeholder="Wrong Choice 2">
-                    <input type="text" value="${item.o[3]}" oninput="updateOption(${i}, 3, this.value)" placeholder="Wrong Choice 3">
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function updateQ(index, key, val) { questionBank[index][key] = val; saveToStorage(); }
-        function updateCorrect(index, val) { 
-            questionBank[index].a = val; 
-            questionBank[index].o[0] = val; 
-            saveToStorage(); 
-        }
-        function updateOption(qIndex, optIndex, val) { 
-            questionBank[qIndex].o[optIndex] = val; 
-            saveToStorage(); 
-        }
-
-        function addQuestion() {
-            questionBank.push({ q: "New Question?", a: "Correct", o: ["Correct", "Wrong1", "Wrong2", "Wrong3"] });
-            saveToStorage();
-            renderEditor();
-        }
-
-        function removeQuestion(i) {
-            questionBank.splice(i, 1);
-            saveToStorage();
-            renderEditor();
-        }
-
-        function closeEditor() {
-            document.getElementById('editor-screen').style.display='none'; 
-            document.getElementById('title-screen').style.display='flex';
-        }
-
-        // --- GAME LOGIC ---
-        function openSelection() {
-            document.getElementById('title-screen').style.display='none'; 
-            document.getElementById('select-screen').style.display='flex';
-            [1, 2].forEach(p => {
-                const grid = document.getElementById('grid' + p); grid.innerHTML = '';
-                characters.forEach(c => {
-                    const card = document.createElement('div'); card.className = 'char-card';
-                    card.innerHTML = `<img src="${c.file}"><br><span style="font-size:0.6rem">${c.name}</span>`;
-                    card.onclick = () => {
-                        if (p === 1) p1Char = c; else p2Char = c;
-                        Array.from(grid.children).forEach(ch => ch.style.borderColor = "#999");
-                        card.style.borderColor = c.color;
-                        const v = document.getElementById('sfx-voice'); v.src = c.line; v.play();
-                        if (p1Char && p2Char) document.getElementById('race-btn').style.display = 'block';
-                    };
-                    grid.appendChild(card);
-                });
-            });
-        }
-
-        function startRace() {
-            document.getElementById('bg-layer').style.backgroundImage = "url('maze_bg.png')";
-            document.getElementById('select-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'flex';
-            document.getElementById('p1-sprite').src = p1Char.file;
-            document.getElementById('p2-sprite').src = p2Char.file;
-            document.getElementById('p1-label').innerText = p1Char.name;
-            document.getElementById('p2-label').innerText = p2Char.name;
-            loadQ(1); loadQ(2);
-        }
-
-        function loadQ(p) {
-            if (questionBank.length === 0) return;
-            const q = questionBank[Math.floor(Math.random() * questionBank.length)];
-            document.getElementById(`p${p}-q`).innerText = q.q;
-            const box = document.getElementById(`p${p}-opts`); box.innerHTML = '';
-            
-            // Create a shuffled copy of options
-            const shuffledOptions = [...q.o].sort(() => Math.random() - 0.5);
-            
-            shuffledOptions.forEach(opt => {
-                const btn = document.createElement('button'); btn.className = 'opt-btn'; btn.innerText = opt;
-                btn.onclick = () => { 
-                    if (opt === q.a) { 
-                        spawnCoin(p);
-                        move(p); 
-                    } 
-                    loadQ(p); 
-                };
-                box.appendChild(btn);
-            });
-        }
-
-        function spawnCoin(p) {
-            const track = document.getElementById(`track-p${p}`);
-            const runner = document.getElementById(`p${p}-sprite`);
-            const coin = document.createElement('div');
-            coin.className = 'coin-fx';
-            coin.style.left = runner.offsetLeft + (runner.offsetWidth / 2) + "px";
-            coin.style.bottom = "120px";
-            track.appendChild(coin);
-            document.getElementById('sfx-coin').currentTime = 0;
-            document.getElementById('sfx-coin').play();
-            setTimeout(() => coin.remove(), 600);
-        }
-
-        function move(p) {
-            const sprite = document.getElementById(`p${p}-sprite`);
-            sprite.classList.add('jump'); setTimeout(() => sprite.classList.remove('jump'), 500);
-            if (p === 1) { 
-                p1Pos += 10; 
-                sprite.style.left = p1Pos + '%'; 
-                if(p1Pos >= 85) win(p1Char); 
-            }
-            else { 
-                p2Pos += 10; 
-                sprite.style.left = p2Pos + '%'; 
-                if(p2Pos >= 85) win(p2Char); 
-            }
-        }
-
-        function win(winner) {
-            document.getElementById('victory-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = winner.name + " WINS!";
-            document.getElementById('winner-text').style.color = winner.color;
-            document.getElementById('winner-gif').src = winner.file;
-            const v = document.getElementById('sfx-voice'); v.src = winner.line; v.play();
-        }
-    </script>
-</body>
-</html>
+// --- GAME STATE ---
+const characters = [
+{ name: "MARIO", color: "var(--mario)", pitch: 1.0 },
+{ name: "LUIGI", color: "var(--luigi)", pitch: 0.8 },
+{ name: "PEACH", color: "var(--peach)", pitch: 1.4 },
+{ name: "WARIO",
